@@ -46,10 +46,16 @@ message SysStatsResponse {
   uint32 Uptime = 10;
 }
 
+message GetUserIPStatsResponse {
+  string name = 1;
+  string value = 2;
+}
+
 service StatsService {
   rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {}
   rpc QueryStats(QueryStatsRequest) returns (QueryStatsResponse) {}
   rpc GetSysStats(SysStatsRequest) returns (SysStatsResponse) {}
+  rpc GetUserIPStats(GetStatsRequest) returns (GetUserIPStatsResponse) {}
 }
 
 message Config {}

@@ -4,10 +4,13 @@ package stats
 
 import (
 	"context"
-
+    "net"
 	"v2ray.com/core/common"
 	"v2ray.com/core/features"
 )
+
+
+
 
 // Counter is the interface for stats counters.
 //
@@ -21,6 +24,13 @@ type Counter interface {
 	Add(int64) int64
 }
 
+
+type IPStorager interface {
+	Add(net.IP) bool
+	Empty()
+	Remove(net.IP) bool
+	All() []net.IP
+}
 // Channel is the interface for stats channel.
 //
 // v2ray:api:stable
@@ -71,6 +81,9 @@ type Manager interface {
 	// GetCounter returns a counter by its identifier.
 	GetCounter(string) Counter
 
+	RegisterIPStorager(string) (IPStorager, error)
+	GetIPStorager(string) IPStorager
+
 	// RegisterChannel registers a new channel to the manager. The identifier string must not be empty, and unique among other channels.
 	RegisterChannel(string) (Channel, error)
 	// UnregisterCounter unregisters a channel from the manager by its identifier.
@@ -88,6 +101,16 @@ func GetOrRegisterCounter(m Manager, name string) (Counter, error) {
 
 	return m.RegisterCounter(name)
 }
+
+func GetOrRegisterIPStorager(m Manager, name string) (IPStorager, error) {
+	ipStorager := m.GetIPStorager(name)
+	if ipStorager != nil {
+		return ipStorager, nil
+	}
+
+	return m.RegisterIPStorager(name)
+}
+
 
 // GetOrRegisterChannel tries to get the StatChannel first. If not exist, it then tries to create a new channel.
 func GetOrRegisterChannel(m Manager, name string) (Channel, error) {
@@ -126,6 +149,15 @@ func (NoopManager) UnregisterCounter(string) error {
 
 // GetCounter implements Manager.
 func (NoopManager) GetCounter(string) Counter {
+	return nil
+}
+
+
+func (NoopManager) RegisterIPStorager(string) (IPStorager, error) {
+	return nil, newError("not implemented")
+}
+
+func (NoopManager) GetIPStorager(string) IPStorager {
 	return nil
 }
 

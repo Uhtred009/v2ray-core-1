@@ -17,8 +17,14 @@ import (
 type Manager struct {
 	access   sync.RWMutex
 	counters map[string]*Counter
+	ipStoragers map[string]*IPStorager
 	channels map[string]*Channel
 	running  bool
+}
+
+// Type implements common.HasType.
+func (*Manager) Type() interface{} {
+	return stats.ManagerType()
 }
 
 // NewManager creates an instance of Statistics Manager.
@@ -27,14 +33,57 @@ func NewManager(ctx context.Context, config *Config) (*Manager, error) {
 		counters: make(map[string]*Counter),
 		channels: make(map[string]*Channel),
 	}
-
+	 if config.TrackIp {
+		m.ipStoragers = make(map[string]*IPStorager)
+	}
 	return m, nil
 }
 
-// Type implements common.HasType.
-func (*Manager) Type() interface{} {
-	return stats.ManagerType()
+func (m *Manager) RegisterIPStorager(name string) (stats.IPStorager, error) {
+	if m.ipStoragers == nil {
+		return nil, newError("IPStorager is disabled")
+	}
+
+	m.access.Lock()
+	defer m.access.Unlock()
+
+	if _, found := m.ipStoragers[name]; found {
+		return nil, newError("IPStorager ", name, " already registered.")
+	}
+	newError("create new IPStorager ", name).AtDebug().WriteToLog()
+	s := new(IPStorager)
+	m.ipStoragers[name] = s
+	return s, nil
 }
+
+func (m *Manager) GetIPStorager(name string) stats.IPStorager {
+	if m.ipStoragers == nil {
+		return nil
+	}
+
+	m.access.RLock()
+	defer m.access.RUnlock()
+
+	if s, found := m.ipStoragers[name]; found {
+		return s
+	}
+	return nil
+}
+
+func (m *Manager) VisitIPStoragers(visitor func(string, stats.IPStorager) bool) {
+	m.access.RLock()
+	defer m.access.RUnlock()
+
+	for name, c := range m.ipStoragers {
+		if !visitor(name, c) {
+			break
+		}
+	}
+}
+
+
+
+
 
 // RegisterCounter implements stats.Manager.
 func (m *Manager) RegisterCounter(name string) (stats.Counter, error) {
