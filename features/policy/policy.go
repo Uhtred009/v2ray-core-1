@@ -33,6 +33,7 @@ type Stats struct {
 type Buffer struct {
 	// Size of buffer per connection, in bytes. -1 for unlimited buffer.
 	PerConnection int32
+	Rate          uint64
 }
 
 // SystemStats contains stat policy settings on system level.
@@ -81,6 +82,7 @@ func ManagerType() interface{} {
 }
 
 var defaultBufferSize int32
+var defaultRate uint64
 
 func init() {
 	const key = "v2ray.ray.buffer.size"
@@ -110,6 +112,7 @@ func init() {
 func defaultBufferPolicy() Buffer {
 	return Buffer{
 		PerConnection: defaultBufferSize,
+		Rate:          defaultRate,
 	}
 }
 

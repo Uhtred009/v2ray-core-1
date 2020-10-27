@@ -12,6 +12,7 @@ type Policy struct {
 	StatsUserUplink   bool    `json:"statsUserUplink"`
 	StatsUserDownlink bool    `json:"statsUserDownlink"`
 	BufferSize        *int32  `json:"bufferSize"`
+	Rate              *uint64 `json:"rate"`
 }
 
 func (t *Policy) Build() (*policy.Policy, error) {
@@ -37,16 +38,23 @@ func (t *Policy) Build() (*policy.Policy, error) {
 		},
 	}
 
+    var bs int32
+	var rate uint64
+
 	if t.BufferSize != nil {
-		bs := int32(-1)
+		bs = int32(-1)
 		if *t.BufferSize >= 0 {
 			bs = (*t.BufferSize) * 1024
 		}
+		if t.Rate != nil {
+		rate = *t.Rate
+		}
+
 		p.Buffer = &policy.Policy_Buffer{
-			Connection: bs,
+		Connection: bs,
+		Rate:       rate,
 		}
 	}
-
 	return p, nil
 }
 

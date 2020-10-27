@@ -155,14 +155,22 @@ func (d *DefaultDispatcher) getLink(ctx context.Context) (*transport.Link, *tran
 	}
 
 	if user != nil && len(user.Email) > 0 {
-
+        
 		if len(clientIP) > 0 {
 			if ipStorager, _ := stats.GetOrRegisterIPStorager(d.stats, "user>>>" +user.Email+">>>ip"); ipStorager != nil {
 				ipStorager.Add(clientIP)
 			}
 		}
+        var bucket *RateLimiter
 
 		p := d.policy.ForLevel(user.Level)
+
+		if p.Buffer.Rate != 0 {
+			bucket = NewRateLimiter(int64(p.Buffer.Rate) * 1024)
+			inboundLink.Writer = RateWriter(inboundLink.Writer, bucket)
+			outboundLink.Writer = RateWriter(outboundLink.Writer, bucket)
+		}
+
 		if p.Stats.UserUplink {
 			name := "user>>>" + user.Email + ">>>traffic>>>uplink"
 			if c, _ := stats.GetOrRegisterCounter(d.stats, name); c != nil {

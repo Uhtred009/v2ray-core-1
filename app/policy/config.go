@@ -26,6 +26,7 @@ func defaultPolicy() *Policy {
 		},
 		Buffer: &Policy_Buffer{
 			Connection: p.Buffer.PerConnection,
+			Rate:       p.Buffer.Rate,
 		},
 	}
 }
@@ -56,6 +57,7 @@ func (p *Policy) overrideWith(another *Policy) {
 	if another.Buffer != nil {
 		p.Buffer = &Policy_Buffer{
 			Connection: another.Buffer.Connection,
+			Rate:       another.Buffer.Rate,
 		}
 	}
 }
@@ -76,6 +78,7 @@ func (p *Policy) ToCorePolicy() policy.Session {
 	}
 	if p.Buffer != nil {
 		cp.Buffer.PerConnection = p.Buffer.Connection
+		cp.Buffer.Rate = p.Buffer.Rate
 	}
 	return cp
 }
